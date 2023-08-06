@@ -1,4 +1,4 @@
-from Parsel import Lexel, Parsel
+from parser import Lexel, Parsel
 from math import pi, e
 class Interpreter:
     def __init__(self):
