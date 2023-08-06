@@ -1,6 +1,15 @@
 # Calcli
-A command-line calculator made with python.
+A command-line calculator made with python.  
 
+## installing
+To work, it needs the `sly` library, install it with:  
+```sh
+# on windows
+py -m pip install sly
+# OR
+# on linux and the most part derived from him
+pip3 install sly
+```
 ## Operators
 
 '+' - add two numbers  
