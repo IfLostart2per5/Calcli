@@ -1,8 +1,10 @@
+
 from sly import Parser
 from lexer import Lexel
-from math import factorial, sqrt
-from utils import Consts
+from math import factorial
+from utils import Consts, normalize_number
 from re import match
+from inspect import isgenerator  
 
 class undefined:
     def __str__(self) -> str:
@@ -11,8 +13,21 @@ class undefined:
     def __repr__(self) -> str:
         return ''
 
-class Parsel(Parser):
 
+class GeneratorRepr:
+    def __init__(self, mode, start_or_list, limit=None, step=1) -> None:
+        if mode == "range":
+            self._repr = list(range(start_or_list, limit, step))
+            self.gen = (i for i in range(start, limit, step))
+        elif mode == "list":
+            self._repr = start_or_list
+            self.gen = (i for i in start_or_list)
+    def __repr__(self):
+        return str(self._repr) + "@lazy_mode"
+
+
+class Parsel(Parser):
+    
     tokens = Lexel.tokens
 
     literals = Lexel.literals 
@@ -39,9 +54,11 @@ class Parsel(Parser):
     def line(self, p):
         return p.condition
 
-    @_('loop')
-    def line(self, p):
-        return p.loop
+    @_('empty')
+    def line(self, p): pass
+
+    @_('COMMENT')
+    def line(self, p): pass
 
 
     @_('expr PLUS term')
@@ -63,7 +80,7 @@ class Parsel(Parser):
     @_('term DIV fact')
     def term(self, p):
         try:
-            return p.term / p.fact 
+            return normalize_number(p.term / p.fact)
         except ZeroDivisionError:
             print("Erro: Um número não pode ser dividido por 0, pois x / 0 é inválido, onde x pode ser qualquer número...")
             return undefined()
@@ -94,13 +111,16 @@ class Parsel(Parser):
     @_('fact POWER prime')
     def fact(self, p):
         try:
-            return p.fact ** p.prime
+            return normalize_number(p.fact ** p.prime)
         except ZeroDivisionError:
             print("Erro: zero não pode ser elevado a um número negativo.")
 
     @_('SQRT "(" prime ")"')
     def fact(self, p):
-        return sqrt(p.prime)
+        try:
+            return sqrt(p.prime)
+        except ValueError:
+            print("Erro: erro de dominio matematico.")
     
     @_('CUSTOMRT "(" prime "," prime ")"')
     def fact(self, p):
@@ -138,6 +158,7 @@ class Parsel(Parser):
     @_('ID')
     def prime(self, p):
         try:
+
             return self.names[p.ID]
         except LookupError:
             try:
@@ -156,7 +177,21 @@ class Parsel(Parser):
 
     @_('ID "[" expr "]"')
     def prime(self, p):
-        return self.names[p.ID][p.expr]
+        try:
+            return self.names[p.ID][p.expr]
+        except TypeError:
+            print("Erro: um número não suporta indexação!")
+    @_('ID "[" ARROW "]"')
+    def prime(self, p):
+
+        if isinstance(self.names[p.ID], GeneratorRepr) and isgenerator(self.names[p.ID].gen):
+            try:
+                return next(self.names[p.ID].gen)
+            except StopIteration:
+                print("Erro: a expressão geradora acabou.")
+                del self.names[p.ID]
+        else:
+            print("Erro: a lista não está no modo tardio!")
 
     @_('NUMBER')
     def number(self, p):
@@ -169,14 +204,16 @@ class Parsel(Parser):
         else:
             self.names[p.ID] = p.value
         
-        
+    @_('POSTERIOR ID')
+    def statement(self, p):
+        self.names[p.ID] = undefined()
 
 
     @_('CONST ID "=" value')
     def statement(self, p):
         try:
             if p.ID in self.names.keys():
-                print(f"o nome {p.ID} ja foi declarado c    omo uma variavel.")
+                print(f"o nome {p.ID} ja foi declarado como uma variavel.")
             else:
                 self.const_names[p.ID] = p.value
         except ValueError:
@@ -219,7 +256,7 @@ class Parsel(Parser):
         if bool(p.relational):
             return p.expr0
         else:
-            return p.expr1
+            return p.expr0
 
     @_('"(" relational ")" ARROW expr ":" condition')
     def condition(self, p):
@@ -228,13 +265,6 @@ class Parsel(Parser):
         else:
             return p.condition
 
-
-
-    @_('"[" expr "," expr "," expr "]" ARROW line ')
-    def loop(self, p):
-        ran = range(p.expr0, p.expr1, p.expr2)
-        for _ in ran:
-            print(p.line)
 
     @_('expr')
     def value(self, p):
@@ -252,17 +282,44 @@ class Parsel(Parser):
     def value(self, p):
         return list(range(p.expr0, p.expr1, p.expr2))
 
-    
+    @_('"{" expr RANGE expr "@" "}"')
+    def value(self, p):
+        return GeneratorRepr("range", p.expr0, p.expr1)
+
+    @_('"{" expr RANGE expr ARROW expr "@" "}"')
+    def value(self, p):
+        return GeneratorRepr("range", p.expr0, p.expr1, p.expr2)
+
+    @_('"{" empty "}"')
+    def value(self, p):
+        return []
 
 
+    @_('"{" elements "}"')
+    def value(self, p):
+        return p.elements
 
+    @_('"{" elements "@" "}"')
+    def value(self, p):
+        return GeneratorRepr("list", p.elements)
+
+    @_('')
+    def empty(self, p):
+        pass
+
+    @_('expr "," elements')
+    def elements(self, p):
+        return [p.expr] + p.elements
+
+    @_('expr')
+    def elements(self, p):
+        return [p.expr]
 
 
 
 
 if __name__ == "__main__":
     yacc = Parsel(Lexel())
-
     try:
 
         while (data := input('expression > ')) != '.q':
