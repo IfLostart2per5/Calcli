@@ -4,11 +4,24 @@ A command-line calculator made with python.
 ## installing
 To work, it needs the `sly` library, install it with:  
 ```sh
+git clone https://github.com/IfLostart2per5/Calcli/
+cd Calcli
 # on windows
 py -m pip install sly
 # OR
 # on linux and the most part derived from him
 pip3 install sly
+```
+
+## using
+To use the interpreter, init the file `cli.py`.
+```sh
+python3 cli.py
+#OR
+#for windows
+py cli.py
+# if appear this, you have sucess!
+/>>
 ```
 ## Operators
 
