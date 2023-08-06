@@ -3,35 +3,35 @@ A command-line calculator made with python.
 
 ## Operators
 
-'+' - add two numbers
-'*' - multiply two numbers
-'-' - subtract two numbers
-'/' - divide two numbers
-'^' - raise a number to power of other number
-'|x|' - the absolute value of x
-'x!' - factorial of x
+'+' - add two numbers  
+'*' - multiply two numbers  
+'-' - subtract two numbers  
+'/' - divide two numbers  
+'^' - raise a number to power of other number  
+'|x|' - the absolute value of x  
+'x!' - factorial of x  
 
 ### relational operators
-'==' - returns 1 if two numbers are equals, else it returns 0
-'>=' - returns 1 if a number is greater than or equals to other number, else it returns 0
-'<=' - returns 1 if a number is less than or equals to other number, else it returns 0
-'!=' - returns 1 if two numbers are different, else it returns 0
-'<' - returns 1 if a number is less than other number, else it returns 0
-'>' - returns 1 if a number is greater than other number, else it returns 0
+'==' - returns 1 if two numbers are equals, else it returns 0.  
+'>=' - returns 1 if a number is greater than or equals to other number, else it returns 0.  
+'<=' - returns 1 if a number is less than or equals to other number, else it returns 0.  
+'!=' - returns 1 if two numbers are different, else it returns 0.  
+'<' - returns 1 if a number is less than other number, else it returns 0.  
+'>' - returns 1 if a number is greater than other number, else it returns 0.  
 
 ## Negative values
 
-Negative values must be between parentesis, in format (-x)
+Negative values must be puted between parentesis, in format (-x)
 
 
 ## functions
 
 Some integrated functions (cannot be created more):
-  1. sqrt(x) - returns the square root of x
-  2. ctrt(x, y) - returns the y-root of x (x^(y^-1))
-  3. perc(x) - returns the decimal shape of x percent
-  4. perm(x) - returns the decimal shape of x permile
-  5. receive() - returns the expression typed by user
+  1. sqrt(x) - returns the square root of x  
+  2. ctrt(x, y) - returns the y-root of x (x^(y^-1))  
+  3. perc(x) - returns the decimal shape of x percent  
+  4. perm(x) - returns the decimal shape of x permile  
+  5. receive() - returns the expression typed by user  
 
 example:
 ```
@@ -53,14 +53,15 @@ example:
 ## extras
 
 ### variables and constants
-`name = expr` for variables and `$name = expr` for constants
+`name = expr` for variables and `$name = expr` for constants.  
+  
 
-delete a variable typing `#{var name}`
+delete a variable typing `#{var name}`  
 
-create a posterior-assignment variable typing `post {var name}`
+create a posterior-assignment variable typing `post {var name}`  
 
 ### conditional lines
-`(relational expression) -> onTrue [: onFalse|: (relational expression) -> elif ...]`
+`(relational expression) -> onTrue [: onFalse|: (relational expression) -> elif ...]`  
 example:
 
 ```
@@ -79,13 +80,13 @@ $value = receive()
 
 ### ranges and lists
 
-create a range with numbers:
-`{start...end [-> steps]}`
+create a range with numbers:  
+`{start...end [-> steps]}`  
 
-create a list with numbers:
-`{n1, n2, n3, ..., n_n}`
+create a list with numbers:  
+`{n1, n2, n3, ..., n_n}`  
 
-ranges example:
+ranges example:  
 ```
 />> a = {1...10}
 />> a
@@ -99,7 +100,7 @@ ranges example:
 98
 ```
 
-list example:
+list example:  
 ```
 />> list = {1, 4, 3, 6}
 />> list[0]
@@ -111,9 +112,9 @@ list example:
 
 ### lazy ranges and lists
 create a lazy range/list adding a '@' at the final of the list/range.
-
-Note:
-Its running generator expressions at the backend
+  
+Note:  
+Its running generator expressions at the backend  
 
 ```
 />> a = {1...10@}
@@ -149,5 +150,5 @@ Valor c não foi declarado
 />> .q
 ```
 
-note too that when occurs the end of the lazy list, its deleted.
+note too that when occurs the end of the lazy list, it is deleted.
 
