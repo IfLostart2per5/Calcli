@@ -1,14 +1,16 @@
 
 from sly import Lexer 
-from utils import dynamic_parse, match
+from utils import dynamic_parse, clear_ends
 from re import match
 
+
 class Lexel(Lexer):
-    tokens = {NUMBER, PLUS, TIMES, DIV, SUB, POWER, REST, ID, DELETE, GE, LE, NE, GT, LT, EQ, ARROW, RANGE, CONST, SQRT, CUSTOMRT, PERHUNDRED, PERTHOUSAND, INPUT, COMMENT, POSTERIOR}
+    tokens = {NUMBER, PLUS, TIMES, DIV, SUB, POWER, REST, ID, DELETE, GE, LE, NE, GT, LT, EQ, ARROW, RANGE, CONST, SQRT, CUSTOMRT, PERHUNDRED, PERTHOUSAND, INPUT, COMMENT, POSTERIOR, STRING}
 
     literals = {'(', ')','!', '|', '=', ':', '[', ']','{', '}', ',', '@', ';'}
     ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
     NUMBER = r"\d+(\.\d+)?i?"
+    STRING = r'"(.*?)"'
     ARROW = r"\-\>"
     RANGE = r"\.\.\."
     COMMENT = r"\#\#.*"
@@ -55,40 +57,24 @@ class Lexel(Lexer):
 
     @_(r'\#\#.*')
     def COMMENT(self, t):
-        if t.value[3:].startswith('/%'):
-            value = t.value[6:]
-            key  = []
-            value = []
-            for char in value:
-                if match('[a-z]', char):
-                    key.append(char)
-                elif match(r'\:', char):
-                    continue
-                elif match(r'[a-z]', char):
-                    value.append(char)
-                elif match(r"\%|\/", char):
-                    pass
+        pass 
 
-            key = ''.join(key)
-            value = ''.join(value)
-
-            if key == 'config-log':
-                if value == '1':
-                    with open('buffer', 'w') as f:
-                        f.write('RECORD-LOG : TRUE')
-                elif value == '0':
-                    pass
-                else:
-                    raise RuntimeError('ERRO INTERNO: MÁ CONFIGURAÇÃO DO LOGGER')
-            else:
-                raise RuntimeError("ERRO INTERO: MÁ CONFIGURAÇÃO DO INTERPRETADOR")
-        else:
-            pass
-
-
-
-
+    @_(r'"(.*?)"')
+    def STRING(self, t):
+        t.value = clear_ends(t.value)
+        return t
 
 
     def error(self, t):
         raise ValueError("Bad character {!r} at line {} and index {}".format(t.value[0], self.lineno, self.index))
+
+
+if __name__ == "__main__":
+    lex = Lexel()
+    while True:
+        try:
+            r = input('(debug) />>')
+            for tk in lex.tokenize(r):
+                print(f"type = '{tk.type}' value = '{tk.value}'")
+        except EOFError:
+            break

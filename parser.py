@@ -2,7 +2,7 @@
 from sly import Parser
 from lexer import Lexel
 from math import factorial
-from utils import Consts, normalize_number
+from utils import Consts, format_motor, normalize_number, clear_ends
 from re import match
 from inspect import isgenerator  
 
@@ -18,7 +18,7 @@ class GeneratorRepr:
     def __init__(self, mode, start_or_list, limit=None, step=1) -> None:
         if mode == "range":
             self._repr = list(range(start_or_list, limit, step))
-            self.gen = (i for i in range(start, limit, step))
+            self.gen = (i for i in range(start_or_list, limit, step))
         elif mode == "list":
             self._repr = start_or_list
             self.gen = (i for i in start_or_list)
@@ -35,7 +35,7 @@ class Parsel(Parser):
         self.lex = lex
         self.names = {}
         self.const_names = Consts()
-     
+ 
 
 
     @_('expr')
@@ -60,10 +60,16 @@ class Parsel(Parser):
     @_('COMMENT')
     def line(self, p): pass
 
+    @_('strexpr')
+    def line(self, p):
+        return p.strexpr
+
 
     @_('expr PLUS term')
     def expr(self, p):
         return p.expr + p.term
+
+        
 
     @_('expr SUB term')
     def expr(self, p):
@@ -72,6 +78,7 @@ class Parsel(Parser):
     @_('term')
     def expr(self, p):
         return p.term
+
 
     @_('term TIMES fact')
     def term(self, p):
@@ -93,7 +100,7 @@ class Parsel(Parser):
         except ZeroDivisionError:
             print("Erro: Um número não pode ser dividido por 0, pois x / 0 é inválido, onde x pode ser qualquer número...")
             return undefined()
-
+    
 
 
     @_('"|" fact "|"')
@@ -183,15 +190,17 @@ class Parsel(Parser):
             print("Erro: um número não suporta indexação!")
     @_('ID "[" ARROW "]"')
     def prime(self, p):
-
-        if isinstance(self.names[p.ID], GeneratorRepr) and isgenerator(self.names[p.ID].gen):
-            try:
-                return next(self.names[p.ID].gen)
-            except StopIteration:
-                print("Erro: a expressão geradora acabou.")
-                del self.names[p.ID]
+        if p.ID in self.names.keys():
+            if isinstance(self.names[p.ID], GeneratorRepr) and isgenerator(self.names[p.ID].gen):
+                try:
+                    return next(self.names[p.ID].gen)
+                except StopIteration:
+                    print("Erro: a expressão geradora acabou.")
+                    del self.names[p.ID]
+            else:
+                print("Erro: a lista não está no modo tardio!")
         else:
-            print("Erro: a lista não está no modo tardio!")
+            print(f'Erro: O conjunto preguiçoso {p.ID} não foi declarado')
 
     @_('NUMBER')
     def number(self, p):
@@ -207,7 +216,6 @@ class Parsel(Parser):
     @_('POSTERIOR ID')
     def statement(self, p):
         self.names[p.ID] = undefined()
-
 
     @_('CONST ID "=" value')
     def statement(self, p):
@@ -274,6 +282,10 @@ class Parsel(Parser):
     def value(self, p):
         return p.relational
 
+    @_('strexpr')
+    def value(self, p):
+        return p.strexpr
+
     @_('"{" expr RANGE expr "}"')
     def value(self, p):
         return list(range(p.expr0, p.expr1))
@@ -309,11 +321,41 @@ class Parsel(Parser):
 
     @_('expr "," elements')
     def elements(self, p):
-        return [p.expr] + p.elements
+        return [p.expr] + (p.elements)
 
     @_('expr')
     def elements(self, p):
         return [p.expr]
+
+    @_('strexpr "," elements')
+    def elements(self, p):
+        return [p.strexpr] + (p.elements)
+
+    @_('strexpr')
+    def elements(self, p):
+        return [p.strexpr]
+
+
+
+    @_('strexpr PLUS string')
+    def strexpr(self, p):
+        return p.strexpr + p.string
+
+    @_('string')
+    def strexpr(self, p):
+        return p.string
+
+    @_('STRING')
+    def string(self, p):
+        return p.STRING
+
+    @_('STRING REST "[" elements "]"')
+    def string(self, p):
+        try:
+            return format_motor(p.STRING, p.elements)
+        except ValueError:
+            print("Erro: a quantidade de parametros e a quantidade de marcadores de formatação não são iguais!")
+ 
 
 
 
