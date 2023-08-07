@@ -174,3 +174,9 @@ Valor c não foi declarado
 
 note too that when occurs the end of the lazy list, it is deleted.
 
+
+## Strings
+to create a string, uses `"text"`.
+
+for a formated string, uses `"text with $" % [args]`.
+
