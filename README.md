@@ -178,5 +178,30 @@ note too that when occurs the end of the lazy list, it is deleted.
 ## Strings
 to create a string, uses `"text"`.
 
-for a formated string, uses `"text with $" % [args]`.
+for a formated string, uses `"text with $" % [args]`.  
+
+example:  
+```
+/>> "Hello world!"
+'Hello world!'
+/>> "Programmed to work and not to feeeeeeel"
+'Programmed to work and not to feeeeeeel'
+/>> "OOOOOh, i will find a $" % ["love"]
+'OOOOOh, i will find a love'
+/>> .q
+```
+
+## the write statement
+
+for a better string representation, uses `write(value)`.  
+example:  
+```
+/>> "Hello"
+'Hello'
+/>> write("Hello")
+Hello
+/>> write(5 + 1)
+6
+/>> .q
+```
 
