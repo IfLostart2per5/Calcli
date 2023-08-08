@@ -5,9 +5,9 @@ from re import match
 
 
 class Lexel(Lexer):
-    tokens = {NUMBER, PLUS, TIMES, DIV, SUB, POWER, REST, ID, DELETE, GE, LE, NE, GT, LT, EQ, ARROW, RANGE, CONST, SQRT, CUSTOMRT, PERHUNDRED, PERTHOUSAND, INPUT, COMMENT, POSTERIOR, STRING}
+    tokens = {NUMBER, PLUS, TIMES, DIV, SUB, POWER, REST, ID, DELETE, GE, LE, NE, GT, LT, EQ, ARROW, RANGE, CONST, SQRT, CUSTOMRT, PERHUNDRED, PERTHOUSAND, INPUT, COMMENT, POSTERIOR, STRING, WRITE, RANDOM, APPEND, POP, CLEAR}
 
-    literals = {'(', ')','!', '|', '=', ':', '[', ']','{', '}', ',', '@', ';'}
+    literals = {'(', ')','!', '|', '=', ':', '[', ']','{', '}', ',', '@', ';', '.'}
     ID = r"[a-zA-Z_][a-zA-Z0-9_]*"
     NUMBER = r"\d+(\.\d+)?i?"
     STRING = r'"(.*?)"'
@@ -33,9 +33,13 @@ class Lexel(Lexer):
     ID['ctrt'] = CUSTOMRT
     ID['perc'] = PERHUNDRED
     ID['perm'] = PERTHOUSAND
-    ID['receive'] = INPUT 
+    ID['receive'] = INPUT
     ID['post'] = POSTERIOR
-    
+    ID['write'] = WRITE
+    ID['random'] = RANDOM
+    ID['add'] = APPEND
+    ID['pop'] = POP
+    ID['clear'] = CLEAR
     ignore = r" \t"
     ignore_newline = r"\n+"
 

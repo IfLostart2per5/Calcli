@@ -5,13 +5,13 @@ from math import factorial
 from utils import Consts, format_motor, normalize_number, clear_ends
 from re import match
 from inspect import isgenerator  
-
+from random import randint
 class undefined:
     def __str__(self) -> str:
         return 'undefined'
 
     def __repr__(self) -> str:
-        return ''
+        return 'undefined()'
 
 
 class GeneratorRepr:
@@ -42,7 +42,7 @@ class Parsel(Parser):
     def line(self, p):
         return p.expr
 
-    @_('statement')
+    @_('assign')
     def line(self, p):
         pass
 
@@ -60,9 +60,14 @@ class Parsel(Parser):
     @_('COMMENT')
     def line(self, p): pass
 
+
     @_('strexpr')
     def line(self, p):
         return p.strexpr
+
+    @_('statement')
+    def line(self, p):
+        pass
 
 
     @_('expr PLUS term')
@@ -101,6 +106,9 @@ class Parsel(Parser):
             print("Erro: Um número não pode ser dividido por 0, pois x / 0 é inválido, onde x pode ser qualquer número...")
             return undefined()
     
+    @_('RANDOM "(" term "," fact ")"')
+    def term(self, p):
+        return randint(p.term, p.fact)
 
 
     @_('"|" fact "|"')
@@ -171,16 +179,10 @@ class Parsel(Parser):
             try:
                 return self.const_names[p.ID]
             except LookupError:
-                print(f"Valor {p.ID} não foi declarado")
+                print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
                 
 
 
-    @_('DELETE ID')
-    def prime(self, p):
-        try:
-            del self.names[p.ID]
-        except KeyError:
-            print(f"Variavel {p.ID} nao foi declarada")
 
     @_('ID "[" expr "]"')
     def prime(self, p):
@@ -188,9 +190,11 @@ class Parsel(Parser):
             return self.names[p.ID][p.expr]
         except TypeError:
             print("Erro: um número não suporta indexação!")
+        except LookupError:
+            print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
     @_('ID "[" ARROW "]"')
     def prime(self, p):
-        if p.ID in self.names.keys():
+        try:
             if isinstance(self.names[p.ID], GeneratorRepr) and isgenerator(self.names[p.ID].gen):
                 try:
                     return next(self.names[p.ID].gen)
@@ -199,29 +203,29 @@ class Parsel(Parser):
                     del self.names[p.ID]
             else:
                 print("Erro: a lista não está no modo tardio!")
-        else:
-            print(f'Erro: O conjunto preguiçoso {p.ID} não foi declarado')
+        except LookupError:
+            print(f"Erro: não foi emcontrado um valor chamado '{p.ID}'")
 
     @_('NUMBER')
     def number(self, p):
         return p.NUMBER
 
     @_('ID "=" value')
-    def statement(self, p):
+    def assign(self, p):
         if p.ID in self.const_names:
-            print(f"O nome {p.ID} já foi declarado como uma constante.")
+            print(f"Erro: o nome '{p.ID}' já foi declarado como uma constante.")
         else:
             self.names[p.ID] = p.value
         
     @_('POSTERIOR ID')
-    def statement(self, p):
+    def assign(self, p):
         self.names[p.ID] = undefined()
 
     @_('CONST ID "=" value')
-    def statement(self, p):
+    def assign(self, p):
         try:
             if p.ID in self.names.keys():
-                print(f"o nome {p.ID} ja foi declarado como uma variavel.")
+                print(f"Erro: o nome '{p.ID}' ja foi declarado como uma variavel.")
             else:
                 self.const_names[p.ID] = p.value
         except ValueError:
@@ -254,65 +258,73 @@ class Parsel(Parser):
     def relational(self, p):
         return int(p.expr0 < p.expr1)
 
-    @_('"(" relational ")" ARROW expr')
+    @_('"(" expr ")" ARROW expr')
     def condition(self, p):
-        if bool(p.relational):
-            return p.expr
+        if bool(p.expr0):
+            return p.expr1
 
-    @_('"(" relational ")" ARROW expr ":" expr')
+    @_('"(" expr ")" ARROW expr ":" expr')
     def condition(self, p):
-        if bool(p.relational):
-            return p.expr0
+        if bool(p.expr0):
+            return p.expr1
         else:
-            return p.expr0
+            return p.expr2
 
-    @_('"(" relational ")" ARROW expr ":" condition')
+    @_('"(" expr ")" ARROW expr ":" condition')
     def condition(self, p):
-        if bool(p.relational):
-            return p.expr
+        if bool(p.expr0):
+            return p.expr1
         else:
             return p.condition
 
+    
+    @_('expression')
+    def value(self, p):
+        return p.expression
+
+    @_('lista')
+    def value(self, p):
+        return p.lista
 
     @_('expr')
-    def value(self, p):
+    def expression(self, p):
         return p.expr
 
     @_('relational')
-    def value(self, p):
+    def expression(self, p):
         return p.relational
 
     @_('strexpr')
-    def value(self, p):
+    def expression(self, p):
         return p.strexpr
 
     @_('"{" expr RANGE expr "}"')
-    def value(self, p):
+    def lista(self, p):
         return list(range(p.expr0, p.expr1))
 
     @_('"{" expr RANGE expr ARROW expr "}"')
-    def value(self, p):
+    def lista(self, p):
         return list(range(p.expr0, p.expr1, p.expr2))
 
     @_('"{" expr RANGE expr "@" "}"')
-    def value(self, p):
+    def lista(self, p):
         return GeneratorRepr("range", p.expr0, p.expr1)
 
     @_('"{" expr RANGE expr ARROW expr "@" "}"')
-    def value(self, p):
+    def lista(self, p):
         return GeneratorRepr("range", p.expr0, p.expr1, p.expr2)
 
     @_('"{" empty "}"')
-    def value(self, p):
+    def lista(self, p):
         return []
 
 
     @_('"{" elements "}"')
-    def value(self, p):
+    def lista(self, p):
         return p.elements
 
     @_('"{" elements "@" "}"')
-    def value(self, p):
+    def lista(self, p):
         return GeneratorRepr("list", p.elements)
 
     @_('')
@@ -335,11 +347,77 @@ class Parsel(Parser):
     def elements(self, p):
         return [p.strexpr]
 
+    @_('WRITE "(" strexpr ")"')
+    def statement(self, p):
+        print(p.strexpr)
 
+    @_('WRITE "(" expr ")"')
+    def statement(self, p):
+        print(p.expr)
+
+    @_('DELETE ID')
+    def statement(self, p):
+        try:
+            del self.names[p.ID]
+        except LookupError:
+            if p.ID in self.const_names:
+                print(f"Erro: '{p.ID}' é uma constante, por tanto, não pode ser reatribuida.")
+            else:
+                print("Erro: não foi encontrado um valor chamado '{p.ID}'.")
+
+    @_('APPEND "(" ID "," expression ")"')
+    def statement(self, p):
+        try:
+            if type(self.names[p.ID]) is list:
+                self.names[p.ID].append(p.expression)
+            else:
+                print('Erro: a função add não funciona com números e/ou strings!')
+        except LookupError:
+            print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
+
+    @_('POP "(" ID ")"')
+    def statement(self, p):
+        try:
+            if type(self.names[p.ID]) is list:
+                return self.names[p.ID].pop()
+            else:
+                print("Erro: o método pop não funciona com números e/ou strings!")
+        except LookupError:
+            print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
+
+    @_('POP "(" ID "," expr ")"')
+    def statement(self, p):
+        try:
+            if type(self.names[p.ID]) is list:
+                return self.names[p.ID].pop(p.expr)
+            else:
+                print("Erro: a função pop não funciona com números e/ou strings!")
+        except LookupError:
+            print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
+        except IndexError:
+            print("Erro: indices fora do intervalo")
+
+    @_('CLEAR "(" ID ")"')
+    def statement(self, p):
+        try:
+            if type(self.names[p.ID]) is list:
+                self.names[p.ID] = []
+            else:
+                print("Erro: a função clear não funciona com números e/ou strings!")
+        except LookupError:
+            print(f"Erro: não foi encontrado um valor chamado '{p.ID}'")
+
+    @_('DELETE ID "[" expr "]"')
+    def statement(self, p):
+        try:
+            del self.names[p.ID][p.expr]
+        except TypeError:
+            print('Erro: um número não suporta indexação')
+        
 
     @_('strexpr PLUS string')
     def strexpr(self, p):
-        return p.strexpr + p.string
+        return p.strexpr + p.string 
 
     @_('string')
     def strexpr(self, p):
@@ -349,13 +427,14 @@ class Parsel(Parser):
     def string(self, p):
         return p.STRING
 
-    @_('STRING REST "[" elements "]"')
+    @_('string REST "[" elements "]"')
     def string(self, p):
         try:
-            return format_motor(p.STRING, p.elements)
+            return format_motor(p.string, p.elements)
         except ValueError:
             print("Erro: a quantidade de parametros e a quantidade de marcadores de formatação não são iguais!")
- 
+
+
 
 
 
@@ -364,7 +443,7 @@ if __name__ == "__main__":
     yacc = Parsel(Lexel())
     try:
 
-        while (data := input('expression > ')) != '.q':
+        while (data := input('(debug) \\> ')) != '.q':
         
             r = yacc.parse(yacc.lex.tokenize(data))
             print(r) if r is not None else None

@@ -28,7 +28,7 @@ try:
     while True:
         expr = read("/>> ")
         r = interpreter.run(expr)
-        print(r) if r is not None else None
+        print(repr(r))if r is not None else None
 except KeyboardInterrupt:
     print('Ctrl-C')
 except EOFError:
